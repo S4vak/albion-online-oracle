@@ -35,8 +35,23 @@ const GROUP_ORDER = [
   'potion','food',
 ];
 
+const FAMILY_GROUPS = {
+  weapon:     ['weapon_sword','weapon_axe','weapon_hammer','weapon_dagger','weapon_spear','weapon_bow','weapon_staff','weapon_quarterstaff','weapon_knuckles'],
+  armor:      ['armor_plate','armor_leather','armor_cloth'],
+  accessory:  ['offhand','cape','bag'],
+  consumable: ['potion','food'],
+  gathering:  ['gatherer_armor','tool'],
+};
+const FAMILY_LABELS = {
+  fr: { weapon:'Armes', armor:'Armures', accessory:'Accessoires', consumable:'Consommables', gathering:'Récolte & Outils' },
+  en: { weapon:'Weapons', armor:'Armor', accessory:'Accessories', consumable:'Consumables', gathering:'Gathering & Tools' },
+};
+const ALL_GROUPS = new Set(ITEMS.map(i => i.group));
+
 function ItemPickerModal({ lang, current, onPick, onClose }) {
   const [search, setSearch] = useState('');
+  const [family, setFamily] = useState(null);
+  const [subcat, setSubcat] = useState(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -50,17 +65,23 @@ function ItemPickerModal({ lang, current, onPick, onClose }) {
     };
   }, [onClose]);
 
+  const selectFamily = useCallback((fk) => {
+    setFamily(fk);
+    setSubcat(null);
+  }, []);
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    if (!s) return ITEMS;
-    return ITEMS.filter(i =>
-      (i.name[lang] || '').toLowerCase().includes(s) ||
-      (i.name.en || '').toLowerCase().includes(s) ||
-      i.id.toLowerCase().includes(s)
-    );
-  }, [search, lang]);
+    const activeGroups = subcat ? [subcat] : (family ? FAMILY_GROUPS[family] : null);
+    return ITEMS.filter(i => {
+      if (activeGroups && !activeGroups.includes(i.group)) return false;
+      if (!s) return true;
+      return (i.name[lang] || '').toLowerCase().includes(s) ||
+             (i.name.en || '').toLowerCase().includes(s) ||
+             i.id.toLowerCase().includes(s);
+    });
+  }, [search, lang, family, subcat]);
 
-  // Group by archetype family
   const groups = useMemo(() => {
     const g = {};
     filtered.forEach(it => { (g[it.group] = g[it.group] || []).push(it); });
@@ -90,6 +111,28 @@ function ItemPickerModal({ lang, current, onPick, onClose }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+        </div>
+        <div className="modal-filter">
+          <div className="filter-row">
+            <button className={'filter-pill' + (!family ? ' active' : '')} onClick={() => selectFamily(null)}>
+              {lang === 'fr' ? 'Tout' : 'All'}
+            </button>
+            {Object.keys(FAMILY_GROUPS).map(fk => (
+              <button key={fk} className={'filter-pill' + (family === fk ? ' active' : '')} onClick={() => selectFamily(fk)}>
+                {FAMILY_LABELS[lang][fk]}
+              </button>
+            ))}
+          </div>
+          {family && (
+            <div className="filter-row filter-row-sub">
+              {FAMILY_GROUPS[family].filter(g => ALL_GROUPS.has(g)).map(g => (
+                <button key={g} className={'filter-pill filter-pill-sm' + (subcat === g ? ' active' : '')}
+                  onClick={() => setSubcat(subcat === g ? null : g)}>
+                  {(GROUP_LABELS[lang] && GROUP_LABELS[lang][g]) || g}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="modal-body">
           {Object.keys(groups).length === 0 && (

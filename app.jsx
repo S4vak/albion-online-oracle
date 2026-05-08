@@ -456,7 +456,7 @@ function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem('aoo_theme') || 'parchment');
 
   // Form state
-  const [item, setItem] = useState(ITEMS[0]); // Bow
+  const [item, setItem] = useState(null);
   const [tier, setTier] = useState(6);
   const [ench, setEnch] = useState(0);
   const [quality, setQuality] = useState(1);
@@ -483,8 +483,9 @@ function App() {
 
   // Fetch resource market prices from real API
   const [resourcePrices, setResourcePrices] = useState({});
-  const [resPricesLoading, setResPricesLoading] = useState(true);
+  const [resPricesLoading, setResPricesLoading] = useState(false);
   useEffect(() => {
+    if (!item) { setResourcePrices({}); setResPricesLoading(false); return; }
     let active = true;
     setResPricesLoading(true);
     const recipe = expandedRecipe(item, tier, ench);
@@ -492,34 +493,35 @@ function App() {
       if (active) { setResourcePrices(prices); setResPricesLoading(false); }
     }).catch(() => { if (active) setResPricesLoading(false); });
     return () => { active = false; };
-  }, [item.id, tier, ench, cityId]);
+  }, [item?.id, tier, ench, cityId]);
 
   // Fetch item sell prices across cities from real API
   const [itemPrices, setItemPrices] = useState({});
-  const [itemPricesLoading, setItemPricesLoading] = useState(true);
+  const [itemPricesLoading, setItemPricesLoading] = useState(false);
   useEffect(() => {
+    if (!item) { setItemPrices({}); setItemPricesLoading(false); return; }
     let active = true;
     setItemPricesLoading(true);
     getItemPrices(item.id, tier, ench, quality).then(prices => {
       if (active) { setItemPrices(prices); setItemPricesLoading(false); }
     }).catch(() => { if (active) setItemPricesLoading(false); });
     return () => { active = false; };
-  }, [item.id, tier, ench, quality]);
+  }, [item?.id, tier, ench, quality]);
 
   const sellMarket = itemPrices[cityId] || { price: 0, ageMin: null };
   const sellPrice = sellOverride != null ? sellOverride : sellMarket.price;
 
   // Reset sell override when item changes
-  useEffect(() => { setSellOverride(null); }, [item.id, tier, ench, quality, cityId]);
+  useEffect(() => { setSellOverride(null); }, [item?.id, tier, ench, quality, cityId]);
   // Reset resource overrides when item or city changes
-  useEffect(() => { setOverrides({}); }, [item.id, tier, ench, cityId]);
+  useEffect(() => { setOverrides({}); }, [item?.id, tier, ench, cityId]);
 
   const setOverride = (key, value) => setOverrides(prev => ({ ...prev, [key]: value }));
   const resetOverride = (key) => setOverrides(prev => { const n = { ...prev }; delete n[key]; return n; });
 
   // ---- Computations ----
   const city = CITIES.find(c => c.id === cityId);
-  const cityBonus = (city.bonuses[item.category] != null ? city.bonuses[item.category] : (city.bonuses.all || 0));
+  const cityBonus = item ? (city.bonuses[item.category] != null ? city.bonuses[item.category] : (city.bonuses.all || 0)) : 0;
   // Effective return rate: city bonus alone (15.2% base + city). Focus boosts to ~53% (36 + 24 with full focus).
   // We'll model: base return = 15.2%, +cityBonus, focus replaces base with cityBonus + focus value approximated.
   // Simpler model:
@@ -529,7 +531,7 @@ function App() {
 
   const pricesLoading = resPricesLoading || itemPricesLoading;
 
-  const recipe = expandedRecipe(item, tier, ench);
+  const recipe = item ? expandedRecipe(item, tier, ench) : [];
   const resCostRaw = recipe.reduce((acc, r) => {
     const key = `${r.res}|${r.tier}|${r.ench}`;
     const price = (overrides[key] != null) ? overrides[key] : (resourcePrices[key]?.price ?? 0);
@@ -634,15 +636,15 @@ function App() {
                 ? 'Survolez un prix pour le modifier. Les valeurs en doré sont vos saisies manuelles.'
                 : 'Hover a price to edit it. Gold values are your manual entries.'}
             </div>
-            <ResourcesTable
+            {item && <ResourcesTable
               lang={lang} item={item} tier={tier} ench={ench} cityId={cityId}
               prices={resourcePrices} overrides={overrides}
               setOverride={setOverride} resetOverride={resetOverride}
-            />
+            />}
 
-            <div className="divider"><Glyph name="fleur" size={18} /></div>
+            {item && <div className="divider"><Glyph name="fleur" size={18} /></div>}
 
-            <div className="sell-price-card">
+            {item && <div className="sell-price-card">
               <div>
                 <FieldLabel help={T(lang, 'sell_price_help')}>{T(lang, 'sell_price')} · {city.name}</FieldLabel>
                 <div className="muted" style={{ marginTop: 4 }}>
@@ -660,7 +662,7 @@ function App() {
                 <Coin />
                 <span className="silver-suffix">/ {T(lang, 'unit')}</span>
               </div>
-            </div>
+            </div>}
           </div>
 
           {/* Step 4 */}
@@ -696,26 +698,35 @@ function App() {
           </div>
 
           {/* History chart */}
-          <PriceHistory lang={lang} item={item} tier={tier} ench={ench} quality={quality} cityId={cityId} />
+          {item && <PriceHistory lang={lang} item={item} tier={tier} ench={ench} quality={quality} cityId={cityId} />}
         </div>
 
         {/* Right rail: results */}
         <div className="results-rail">
-          <ResultCard
-            lang={lang}
-            totalProfit={totalProfit}
-            profitPerItem={profitPerItem}
-            margin={margin}
-            qty={qty}
-            totalCost={totalCost}
-            totalRevenue={totalRevenue}
-            verdictKey={verdictKey}
-            resCostEffective={resCostEffective}
-            stationFee={stationFee}
-            marketTaxAmount={sellPrice * marketTaxRate}
-            returnRate={returnRate}
-          />
-          <VolumeCard lang={lang} volume={sellMarket.volume} cityName={city.name} />
+          {!item
+            ? <div className="no-item-placeholder">
+                <Glyph name="fleur-corner" size={48} stroke={1} />
+                <p className="display" style={{ marginTop: 16, fontSize: 18 }}>{T(lang, 'no_data')}</p>
+                <p className="muted" style={{ marginTop: 6 }}>{lang === 'fr' ? 'Sélectionnez un objet à l\'étape 1 pour démarrer le calcul.' : 'Select an item in step 1 to start the calculation.'}</p>
+              </div>
+            : <>
+                <ResultCard
+                  lang={lang}
+                  totalProfit={totalProfit}
+                  profitPerItem={profitPerItem}
+                  margin={margin}
+                  qty={qty}
+                  totalCost={totalCost}
+                  totalRevenue={totalRevenue}
+                  verdictKey={verdictKey}
+                  resCostEffective={resCostEffective}
+                  stationFee={stationFee}
+                  marketTaxAmount={sellPrice * marketTaxRate}
+                  returnRate={returnRate}
+                />
+                <VolumeCard lang={lang} volume={sellMarket.volume} cityName={city.name} />
+              </>
+          }
         </div>
       </div>
 

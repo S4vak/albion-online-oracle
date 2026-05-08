@@ -65,6 +65,22 @@
                6: { fr:'Soie Sombre', en:'Lavish Cloth'},
                7: { fr:'Soie Royale', en:'Opulent Cloth'},
                8: { fr:'Soie Asmodéenne', en:'Baroque Cloth'} } },
+    herb:     { name: { fr: 'Herbes', en: 'Herbs' },        family: 'herb',
+      tiers: { 2: { fr:'Agaric', en:'Agaric'},
+               3: { fr:'Burdock', en:'Burdock'},
+               4: { fr:'Teasel', en:'Teasel'},
+               5: { fr:'Foxglove', en:'Foxglove'},
+               6: { fr:'Muellin', en:'Muellin'},
+               7: { fr:'Comfrey', en:'Comfrey'},
+               8: { fr:'Garlicroot', en:'Garlicroot'} } },
+    farm:     { name: { fr: 'Produits agricoles', en: 'Farm products' }, family: 'farm',
+      tiers: { 2: { fr:'Maïs', en:'Corn'},
+               3: { fr:'Blé', en:'Wheat'},
+               4: { fr:'Citrouille', en:'Pumpkin'},
+               5: { fr:'Chou', en:'Cabbage'},
+               6: { fr:'Pomme de terre', en:'Potato'},
+               7: { fr:'Navet', en:'Turnip'},
+               8: { fr:'Carotte', en:'Carrot'} } },
   };
 
   const TIER_NAME = {
@@ -77,6 +93,8 @@
     metalbar: { 2: 10, 3: 30, 4: 110, 5: 320, 6: 920, 7: 2700, 8: 8200 },
     leather:  { 2: 9,  3: 26, 4: 95,  5: 280, 6: 800, 7: 2350, 8: 7100 },
     cloth:    { 2: 9,  3: 27, 4: 100, 5: 290, 6: 830, 7: 2450, 8: 7400 },
+    herb:     { 2: 7,  3: 20, 4: 72,  5: 210, 6: 600, 7: 1750, 8: 5300 },
+    farm:     { 2: 3,  3: 10, 4: 35,  5: 100, 6: 290, 7: 860,  8: 2600 },
   };
 
   const ENCH_MULT = { 0: 1, 1: 3.6, 2: 9.5, 3: 24, 4: 60 };
@@ -142,6 +160,12 @@
     totem:            (T) => [ {res:'planks',   tier:T, qty:6},  {res:'cloth',    tier:Math.max(2,T-1), qty:2} ],
     horn:             (T) => [ {res:'leather',  tier:T, qty:8},  {res:'cloth',    tier:Math.max(2,T-1), qty:4} ],
     bag:              (T) => [ {res:'cloth',    tier:T, qty:8},  {res:'leather',  tier:Math.max(2,T-1), qty:4} ],
+    potion:           (T) => [ {res:'herb',     tier:T, qty:8} ],
+    food_simple:      (T) => [ {res:'farm',     tier:T, qty:8} ],
+    food_complex:     (T) => [ {res:'farm',     tier:T, qty:12}, {res:'farm',    tier:Math.max(2,T-1), qty:4} ],
+    food_meat:        (T) => [ {res:'farm',     tier:T, qty:8},  {res:'herb',    tier:Math.max(2,T-1), qty:2} ],
+    tool_metal:       (T) => [ {res:'metalbar', tier:T, qty:12}, {res:'planks',  tier:T, qty:8} ],
+    tool_wood:        (T) => [ {res:'planks',   tier:T, qty:12}, {res:'metalbar',tier:Math.max(2,T-1), qty:4} ],
   };
 
   /* ---------- Item archetypes ---------- */
@@ -267,6 +291,66 @@
 
     // ── Bags ──
     { id:'BAG',             name:{ fr:'Sac',                en:'Bag' },               group:'bag',          category:'bag',             iconGlyph:'bag',    recipeKey:'bag' },
+
+    // ── Potions ──
+    { id:'POTION_HEAL',               name:{ fr:'Potion de Soin',             en:'Healing Potion' },         group:'potion', category:'consumable', iconGlyph:'potion', recipeKey:'potion' },
+    { id:'POTION_ENERGY',             name:{ fr:'Potion d\'Énergie',          en:'Energy Potion' },          group:'potion', category:'consumable', iconGlyph:'potion', recipeKey:'potion' },
+    { id:'POTION_PURITY',             name:{ fr:'Potion de Purification',     en:'Cleansing Potion' },       group:'potion', category:'consumable', iconGlyph:'potion', recipeKey:'potion' },
+    { id:'POTION_RESISTANCE_FIRE',    name:{ fr:'Résistance au Feu',          en:'Fire Resistance Potion' }, group:'potion', category:'consumable', iconGlyph:'potion', recipeKey:'potion' },
+    { id:'POTION_RESISTANCE_POISON',  name:{ fr:'Résistance au Poison',       en:'Poison Resistance Potion' },group:'potion',category:'consumable', iconGlyph:'potion', recipeKey:'potion' },
+    { id:'POTION_RESISTANCE_NORMAL',  name:{ fr:'Résistance Physique',        en:'Physical Resistance Potion' },group:'potion',category:'consumable',iconGlyph:'potion',recipeKey:'potion' },
+    { id:'POTION_INVISIBILITY',       name:{ fr:'Potion d\'Invisibilité',     en:'Invisibility Potion' },    group:'potion', category:'consumable', iconGlyph:'potion', recipeKey:'potion' },
+
+    // ── Food ──
+    { id:'BREAD',           name:{ fr:'Pain',               en:'Bread' },                  group:'food', category:'consumable', iconGlyph:'food', recipeKey:'food_simple' },
+    { id:'MEAL_SOUP',       name:{ fr:'Soupe',              en:'Soup' },                   group:'food', category:'consumable', iconGlyph:'food', recipeKey:'food_simple' },
+    { id:'MEAL_SALAD',      name:{ fr:'Salade',             en:'Salad' },                  group:'food', category:'consumable', iconGlyph:'food', recipeKey:'food_simple' },
+    { id:'MEAL_STEW',       name:{ fr:'Ragoût',             en:'Stew' },                   group:'food', category:'consumable', iconGlyph:'food', recipeKey:'food_complex' },
+    { id:'GOOSE_PIE',       name:{ fr:'Tourte à l\'Oie',    en:'Goose Pie' },              group:'food', category:'consumable', iconGlyph:'food', recipeKey:'food_complex' },
+    { id:'BEEF_STEW',       name:{ fr:'Bœuf Bourguignon',   en:'Beef Stew' },              group:'food', category:'consumable', iconGlyph:'food', recipeKey:'food_complex' },
+    { id:'PORK_OMELETTE',   name:{ fr:'Omelette au Porc',   en:'Pork Omelette' },          group:'food', category:'consumable', iconGlyph:'food', recipeKey:'food_meat' },
+    { id:'ROAST_GOOSE',     name:{ fr:'Rôti d\'Oie',        en:'Roast Goose' },            group:'food', category:'consumable', iconGlyph:'food', recipeKey:'food_meat' },
+
+    // ── Gatherer Armor — Fiber ──
+    { id:'HEAD_GATHERER_FIBER',   name:{ fr:'Capuche du Récolteur de Fibres',  en:'Fiber Gatherer Hood' },    group:'gatherer_armor', category:'leather', iconGlyph:'hood',   recipeKey:'leather_helm' },
+    { id:'ARMOR_GATHERER_FIBER',  name:{ fr:'Veste du Récolteur de Fibres',    en:'Fiber Gatherer Garb' },    group:'gatherer_armor', category:'leather', iconGlyph:'jacket', recipeKey:'leather_armor' },
+    { id:'SHOES_GATHERER_FIBER',  name:{ fr:'Chaussures Récolteur de Fibres',  en:'Fiber Gatherer Workboots' },group:'gatherer_armor',category:'leather', iconGlyph:'boots',  recipeKey:'leather_boots' },
+    { id:'BAG_GATHERER_FIBER',    name:{ fr:'Sac du Récolteur de Fibres',      en:'Fiber Gatherer Backpack' }, group:'gatherer_armor', category:'bag',     iconGlyph:'bag',    recipeKey:'bag' },
+
+    // ── Gatherer Armor — Hide ──
+    { id:'HEAD_GATHERER_HIDE',    name:{ fr:'Capuche du Chasseur de Peaux',  en:'Hide Gatherer Hood' },       group:'gatherer_armor', category:'leather', iconGlyph:'hood',   recipeKey:'leather_helm' },
+    { id:'ARMOR_GATHERER_HIDE',   name:{ fr:'Veste du Chasseur de Peaux',    en:'Hide Gatherer Garb' },       group:'gatherer_armor', category:'leather', iconGlyph:'jacket', recipeKey:'leather_armor' },
+    { id:'SHOES_GATHERER_HIDE',   name:{ fr:'Chaussures Chasseur de Peaux',  en:'Hide Gatherer Workboots' },  group:'gatherer_armor', category:'leather', iconGlyph:'boots',  recipeKey:'leather_boots' },
+    { id:'BAG_GATHERER_HIDE',     name:{ fr:'Sac du Chasseur de Peaux',      en:'Hide Gatherer Backpack' },   group:'gatherer_armor', category:'bag',     iconGlyph:'bag',    recipeKey:'bag' },
+
+    // ── Gatherer Armor — Ore ──
+    { id:'HEAD_GATHERER_ORE',     name:{ fr:'Casque du Mineur',      en:'Ore Gatherer Hood' },    group:'gatherer_armor', category:'plate', iconGlyph:'helm',   recipeKey:'plate_helm' },
+    { id:'ARMOR_GATHERER_ORE',    name:{ fr:'Armure du Mineur',      en:'Ore Gatherer Garb' },    group:'gatherer_armor', category:'plate', iconGlyph:'plate',  recipeKey:'plate_armor' },
+    { id:'SHOES_GATHERER_ORE',    name:{ fr:'Bottes du Mineur',      en:'Ore Gatherer Workboots' },group:'gatherer_armor',category:'plate', iconGlyph:'boots',  recipeKey:'plate_boots' },
+    { id:'BAG_GATHERER_ORE',      name:{ fr:'Sac du Mineur',         en:'Ore Gatherer Backpack' }, group:'gatherer_armor', category:'bag',  iconGlyph:'bag',    recipeKey:'bag' },
+
+    // ── Gatherer Armor — Rock ──
+    { id:'HEAD_GATHERER_ROCK',    name:{ fr:'Casque du Carrier',     en:'Rock Gatherer Hood' },   group:'gatherer_armor', category:'plate', iconGlyph:'helm',   recipeKey:'plate_helm' },
+    { id:'ARMOR_GATHERER_ROCK',   name:{ fr:'Armure du Carrier',     en:'Rock Gatherer Garb' },   group:'gatherer_armor', category:'plate', iconGlyph:'plate',  recipeKey:'plate_armor' },
+    { id:'SHOES_GATHERER_ROCK',   name:{ fr:'Bottes du Carrier',     en:'Rock Gatherer Workboots' },group:'gatherer_armor',category:'plate',iconGlyph:'boots',  recipeKey:'plate_boots' },
+    { id:'BAG_GATHERER_ROCK',     name:{ fr:'Sac du Carrier',        en:'Rock Gatherer Backpack' },group:'gatherer_armor', category:'bag',  iconGlyph:'bag',    recipeKey:'bag' },
+
+    // ── Gatherer Armor — Wood ──
+    { id:'HEAD_GATHERER_WOOD',    name:{ fr:'Capuche du Bûcheron',   en:'Wood Gatherer Hood' },   group:'gatherer_armor', category:'leather', iconGlyph:'hood',   recipeKey:'leather_helm' },
+    { id:'ARMOR_GATHERER_WOOD',   name:{ fr:'Veste du Bûcheron',     en:'Wood Gatherer Garb' },   group:'gatherer_armor', category:'leather', iconGlyph:'jacket', recipeKey:'leather_armor' },
+    { id:'SHOES_GATHERER_WOOD',   name:{ fr:'Chaussures du Bûcheron',en:'Wood Gatherer Workboots' },group:'gatherer_armor',category:'leather',iconGlyph:'boots', recipeKey:'leather_boots' },
+    { id:'BAG_GATHERER_WOOD',     name:{ fr:'Sac du Bûcheron',       en:'Wood Gatherer Backpack' },group:'gatherer_armor', category:'bag',   iconGlyph:'bag',    recipeKey:'bag' },
+
+    // ── Gatherer Armor — Fish ──
+    { id:'HEAD_GATHERER_FISH',    name:{ fr:'Chapeau du Pêcheur',    en:'Fisher Hood' },          group:'gatherer_armor', category:'leather', iconGlyph:'hood',   recipeKey:'leather_helm' },
+    { id:'ARMOR_GATHERER_FISH',   name:{ fr:'Veste du Pêcheur',      en:'Fisher Garb' },          group:'gatherer_armor', category:'leather', iconGlyph:'jacket', recipeKey:'leather_armor' },
+    { id:'SHOES_GATHERER_FISH',   name:{ fr:'Chaussures du Pêcheur', en:'Fisher Workboots' },     group:'gatherer_armor', category:'leather', iconGlyph:'boots',  recipeKey:'leather_boots' },
+    { id:'BAG_GATHERER_FISH',     name:{ fr:'Sac du Pêcheur',        en:'Fisher Backpack' },      group:'gatherer_armor', category:'bag',     iconGlyph:'bag',    recipeKey:'bag' },
+
+    // ── Tools ──
+    { id:'2H_TOOL_PICKAXE',  name:{ fr:'Pioche',          en:'Pickaxe' },          group:'tool', category:'tool', iconGlyph:'tool', recipeKey:'tool_metal' },
+    { id:'2H_TOOL_SICKLE',   name:{ fr:'Faucille',        en:'Sickle' },           group:'tool', category:'tool', iconGlyph:'tool', recipeKey:'tool_metal' },
+    { id:'2H_TOOL_FISHING',  name:{ fr:'Canne à Pêche',   en:'Fishing Rod' },      group:'tool', category:'tool', iconGlyph:'tool', recipeKey:'tool_wood' },
   ];
 
   function getRecipe(itemOrId, tier) {

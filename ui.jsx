@@ -220,6 +220,30 @@ function Glyph({ name, size = 36, stroke = 1.6 }) {
           <path d="M10 26 L 38 26" />
         </svg>
       );
+    case 'potion':
+      return (
+        <svg viewBox="0 0 48 48" {...s}>
+          <path d="M20 8 L 20 16 L 12 28 C 10 32, 10 38, 14 40 C 16 42, 20 42, 24 42 C 28 42, 32 42, 34 40 C 38 38, 38 32, 36 28 L 28 16 L 28 8 Z" />
+          <path d="M18 8 L 30 8" />
+          <path d="M14 32 C 16 28, 22 30, 24 34 C 26 30, 32 28, 34 32" />
+        </svg>
+      );
+    case 'food':
+      return (
+        <svg viewBox="0 0 48 48" {...s}>
+          <path d="M8 22 C 8 16, 12 12, 24 12 C 36 12, 40 16, 40 22 L 40 28 C 40 34, 34 38, 24 38 C 14 38, 8 34, 8 28 Z" />
+          <path d="M8 24 L 40 24" />
+          <path d="M24 12 L 24 8 M 18 10 L 20 6 M 30 10 L 28 6" />
+        </svg>
+      );
+    case 'tool':
+      return (
+        <svg viewBox="0 0 48 48" {...s}>
+          <path d="M12 36 L 28 20" />
+          <path d="M26 18 L 30 14 C 32 10, 38 8, 40 10 C 38 14, 36 16, 34 18 L 36 22 C 34 26, 28 24, 26 22 Z" />
+          <path d="M8 42 L 12 36" />
+        </svg>
+      );
     default:
       return null;
   }

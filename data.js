@@ -133,6 +133,15 @@
     torch:            (T) => [ {res:'planks',   tier:T, qty:6}, {res:'cloth',    tier:Math.max(2,T-1), qty:2} ],
     book:             (T) => [ {res:'cloth',    tier:T, qty:8}, {res:'leather',  tier:Math.max(2,T-1), qty:4} ],
     cape:             (T) => [ {res:'cloth',    tier:T, qty:8}, {res:'leather',  tier:Math.max(2,T-1), qty:8} ],
+    dagger_2h:        (T) => [ {res:'metalbar', tier:T, qty:12}, {res:'leather',  tier:T, qty:8} ],
+    quarterstaff_1h:  (T) => [ {res:'planks',   tier:T, qty:8} ],
+    quarterstaff_2h:  (T) => [ {res:'planks',   tier:T, qty:16}, {res:'metalbar', tier:Math.max(2,T-1), qty:8} ],
+    knuckles_1h:      (T) => [ {res:'metalbar', tier:T, qty:6},  {res:'leather',  tier:Math.max(2,T-1), qty:4} ],
+    knuckles_2h:      (T) => [ {res:'metalbar', tier:T, qty:12}, {res:'leather',  tier:T, qty:8} ],
+    orb:              (T) => [ {res:'cloth',    tier:T, qty:8},  {res:'leather',  tier:Math.max(2,T-1), qty:2} ],
+    totem:            (T) => [ {res:'planks',   tier:T, qty:6},  {res:'cloth',    tier:Math.max(2,T-1), qty:2} ],
+    horn:             (T) => [ {res:'leather',  tier:T, qty:8},  {res:'cloth',    tier:Math.max(2,T-1), qty:4} ],
+    bag:              (T) => [ {res:'cloth',    tier:T, qty:8},  {res:'leather',  tier:Math.max(2,T-1), qty:4} ],
   };
 
   /* ---------- Item archetypes ---------- */
@@ -200,6 +209,64 @@
 
     // ── Capes ──
     { id:'CAPE',            name:{ fr:'Cape Standard',      en:'Cape' },              group:'cape',         category:'cloth_armor',     iconGlyph:'cape',   recipeKey:'cape' },
+
+    // ── Extra Swords ──
+    { id:'2H_DUALSWORD',    name:{ fr:'Épées Doubles',      en:'Dual Swords' },       group:'weapon_sword', category:'plate_weapon',   iconGlyph:'sword',  recipeKey:'sword_2h' },
+
+    // ── Extra Axes ──
+    { id:'2H_HALBERD',      name:{ fr:'Hallebarde',         en:'Halberd' },           group:'weapon_axe',   category:'plate_weapon',   iconGlyph:'sword',  recipeKey:'sword_2h' },
+    { id:'2H_SCYTHE',       name:{ fr:'Faux de Guerre',     en:'Scythe' },            group:'weapon_axe',   category:'plate_weapon',   iconGlyph:'sword',  recipeKey:'sword_2h' },
+
+    // ── Extra Hammers ──
+    { id:'2H_FLAIL',        name:{ fr:'Fléau',              en:'Flail' },             group:'weapon_hammer',category:'plate_weapon',   iconGlyph:'sword',  recipeKey:'sword_2h' },
+
+    // ── Extra Daggers ──
+    { id:'2H_DAGGERPAIR',   name:{ fr:'Doubles Dagues',     en:'Dual Daggers' },      group:'weapon_dagger',category:'plate_weapon',   iconGlyph:'dagger_pair', recipeKey:'dagger_2h' },
+    { id:'2H_CLAWPAIR',     name:{ fr:'Griffes',            en:'Claws' },             group:'weapon_dagger',category:'plate_weapon',   iconGlyph:'dagger_pair', recipeKey:'dagger_2h' },
+
+    // ── Extra Spears ──
+    { id:'MAIN_SPEAR',      name:{ fr:'Lance',              en:'Spear' },             group:'weapon_spear', category:'plate_weapon',   iconGlyph:'spear',  recipeKey:'sword_1h' },
+    { id:'2H_GLAIVE',       name:{ fr:'Glaive',             en:'Glaive' },            group:'weapon_spear', category:'plate_weapon',   iconGlyph:'spear',  recipeKey:'spear_2h' },
+
+    // ── Extra Bows ──
+    { id:'2H_CROSSBOWLARGE',name:{ fr:'Arbalète Lourde',    en:'Heavy Crossbow' },    group:'weapon_bow',   category:'hunter_weapon',  iconGlyph:'bow',    recipeKey:'bow_2h' },
+
+    // ── Missing 1H Magic Staves ──
+    { id:'MAIN_ARCANESTAFF',name:{ fr:'Bâton Arcanique',    en:'Arcane Staff' },      group:'weapon_staff', category:'magic_weapon',   iconGlyph:'staff',  recipeKey:'staff_1h_wood' },
+    { id:'MAIN_FROSTSTAFF', name:{ fr:'Bâton de Givre',     en:'Frost Staff' },       group:'weapon_staff', category:'magic_weapon',   iconGlyph:'staff',  recipeKey:'staff_1h_wood' },
+    { id:'MAIN_CURSEDSTAFF',name:{ fr:'Bâton Maudit',       en:'Cursed Staff' },      group:'weapon_staff', category:'magic_weapon',   iconGlyph:'staff',  recipeKey:'staff_1h_wood' },
+
+    // ── Quarterstaffs ──
+    { id:'MAIN_QUARTERSTAFF',     name:{ fr:'Bâton',                   en:'Quarterstaff' },         group:'weapon_quarterstaff', category:'hunter_weapon', iconGlyph:'staff', recipeKey:'quarterstaff_1h' },
+    { id:'2H_QUARTERSTAFF',       name:{ fr:'Bâton Cerclé de Fer',     en:'Iron-clad Staff' },      group:'weapon_quarterstaff', category:'hunter_weapon', iconGlyph:'staff', recipeKey:'quarterstaff_2h' },
+    { id:'2H_DOUBLEBLADEDSTAFF',  name:{ fr:'Bâton à Double Lame',     en:'Double Bladed Staff' },  group:'weapon_quarterstaff', category:'hunter_weapon', iconGlyph:'staff', recipeKey:'staff_2h_wood' },
+
+    // ── Knuckles ──
+    { id:'MAIN_KNUCKLES',   name:{ fr:'Poings de Fer',      en:'Knuckles' },          group:'weapon_knuckles', category:'plate_weapon',  iconGlyph:'knuckles', recipeKey:'knuckles_1h' },
+    { id:'2H_KNUCKLES',     name:{ fr:'Gantelets de Combat',en:'Gauntlets' },         group:'weapon_knuckles', category:'plate_weapon',  iconGlyph:'knuckles', recipeKey:'knuckles_2h' },
+
+    // ── Armor — Plate SET3 ──
+    { id:'HEAD_PLATE_SET3', name:{ fr:'Heaume du Gardien',  en:'Guardian Helmet' },   group:'armor_plate',  category:'plate',           iconGlyph:'helm',   recipeKey:'plate_helm' },
+    { id:'ARMOR_PLATE_SET3',name:{ fr:'Armure du Gardien',  en:'Guardian Armor' },    group:'armor_plate',  category:'plate',           iconGlyph:'plate',  recipeKey:'plate_armor' },
+    { id:'SHOES_PLATE_SET3',name:{ fr:'Bottes du Gardien',  en:'Guardian Boots' },    group:'armor_plate',  category:'plate',           iconGlyph:'boots',  recipeKey:'plate_boots' },
+
+    // ── Armor — Leather SET3 ──
+    { id:'HEAD_LEATHER_SET3', name:{ fr:'Capuche du Ranger', en:'Ranger Hood' },      group:'armor_leather', category:'leather',        iconGlyph:'hood',   recipeKey:'leather_helm' },
+    { id:'ARMOR_LEATHER_SET3',name:{ fr:'Veste du Ranger',   en:'Ranger Jacket' },    group:'armor_leather', category:'leather',        iconGlyph:'jacket', recipeKey:'leather_armor' },
+    { id:'SHOES_LEATHER_SET3',name:{ fr:'Chaussures du Ranger', en:'Ranger Shoes' },  group:'armor_leather', category:'leather',        iconGlyph:'boots',  recipeKey:'leather_boots' },
+
+    // ── Armor — Cloth SET3 ──
+    { id:'HEAD_CLOTH_SET3', name:{ fr:'Capuche du Mage',    en:'Mage Cowl' },         group:'armor_cloth',  category:'cloth_armor',     iconGlyph:'hood',   recipeKey:'cloth_helm' },
+    { id:'ARMOR_CLOTH_SET3',name:{ fr:'Robe du Mage',       en:'Mage Robe' },         group:'armor_cloth',  category:'cloth_armor',     iconGlyph:'robe',   recipeKey:'cloth_armor' },
+    { id:'SHOES_CLOTH_SET3',name:{ fr:'Sandales du Mage',   en:'Mage Sandals' },      group:'armor_cloth',  category:'cloth_armor',     iconGlyph:'boots',  recipeKey:'cloth_boots' },
+
+    // ── Extra Off-hands ──
+    { id:'OFF_ORB',         name:{ fr:'Orbe Arcanique',     en:'Arcane Orb' },        group:'offhand',      category:'offhand',         iconGlyph:'orb',    recipeKey:'orb' },
+    { id:'OFF_TOTEM',       name:{ fr:'Totem',              en:'Totem' },             group:'offhand',      category:'offhand',         iconGlyph:'totem',  recipeKey:'totem' },
+    { id:'OFF_HORN',        name:{ fr:'Cor du Chasseur',    en:"Hunter's Horn" },     group:'offhand',      category:'offhand',         iconGlyph:'horn',   recipeKey:'horn' },
+
+    // ── Bags ──
+    { id:'BAG',             name:{ fr:'Sac',                en:'Bag' },               group:'bag',          category:'bag',             iconGlyph:'bag',    recipeKey:'bag' },
   ];
 
   function getRecipe(itemOrId, tier) {

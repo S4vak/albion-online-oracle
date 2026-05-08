@@ -162,6 +162,64 @@ function Glyph({ name, size = 36, stroke = 1.6 }) {
           <circle cx="40" cy="40" r="3" />
         </svg>
       );
+    case 'spear':
+      return (
+        <svg viewBox="0 0 48 48" {...s}>
+          <path d="M10 42 L 34 18" />
+          <path d="M32 16 L 38 8 L 44 10 L 42 16 L 34 18 Z" />
+          <path d="M6 44 L 10 40" />
+        </svg>
+      );
+    case 'dagger_pair':
+      return (
+        <svg viewBox="0 0 48 48" {...s}>
+          <path d="M8 40 L 22 12" /><path d="M20 10 L 24 8 L 26 12 L 22 12 Z" /><path d="M6 42 L 10 38" />
+          <path d="M26 40 L 40 12" /><path d="M38 10 L 42 8 L 44 12 L 40 12 Z" /><path d="M24 42 L 28 38" />
+        </svg>
+      );
+    case 'knuckles':
+      return (
+        <svg viewBox="0 0 48 48" {...s}>
+          <rect x="10" y="18" width="28" height="14" rx="4" />
+          <rect x="12" y="10" width="6" height="10" rx="2" />
+          <rect x="21" y="8" width="6" height="12" rx="2" />
+          <rect x="30" y="10" width="6" height="10" rx="2" />
+          <path d="M10 32 L 8 42 L 40 42 L 38 32" />
+        </svg>
+      );
+    case 'orb':
+      return (
+        <svg viewBox="0 0 48 48" {...s}>
+          <circle cx="24" cy="22" r="12" />
+          <path d="M24 34 L 24 42" />
+          <path d="M18 40 L 30 40" />
+          <path d="M17 14 C 20 10, 28 10, 31 14" />
+        </svg>
+      );
+    case 'totem':
+      return (
+        <svg viewBox="0 0 48 48" {...s}>
+          <path d="M22 42 L 22 8 L 26 8 L 26 42" />
+          <path d="M14 16 L 34 16 L 34 26 L 14 26 Z" />
+          <path d="M16 10 C 16 8, 20 6, 24 8 C 28 6, 32 8, 32 10 L 34 16 L 14 16 Z" />
+        </svg>
+      );
+    case 'horn':
+      return (
+        <svg viewBox="0 0 48 48" {...s}>
+          <path d="M8 32 C 8 20, 16 10, 36 8 L 40 12 C 22 16, 16 24, 18 36 Z" />
+          <path d="M8 32 C 10 36, 14 38, 18 36" />
+          <circle cx="38" cy="10" r="3" />
+        </svg>
+      );
+    case 'bag':
+      return (
+        <svg viewBox="0 0 48 48" {...s}>
+          <path d="M14 18 L 10 42 L 38 42 L 34 18 Z" />
+          <path d="M18 18 C 18 10, 30 10, 30 18" />
+          <path d="M10 26 L 38 26" />
+        </svg>
+      );
     default:
       return null;
   }

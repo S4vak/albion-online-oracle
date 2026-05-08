@@ -34,9 +34,22 @@ There is no module bundler. Cross-file sharing uses globals: `window.AlbionData`
 
 Three themes (`parchment`, `light`, `dark`) are driven by `data-theme` on `<html>`. The active theme is persisted in `localStorage` under `aoo_theme` and bootstrapped inline in `index.html` before first paint to avoid flash. All colors are CSS custom properties defined in `styles.css` per-theme under `:root[data-theme="..."]`.
 
-### Data layer (`data.js`)
+### Data source: albion-online-data.com API
 
-All pricing is **mocked** — no real API calls. The mock uses a deterministic hash (`noise()`) so prices are stable across reloads for the same inputs. Item IDs follow the real Albion API convention: `T{tier}_{ITEM_ID}` or `T{tier}_{ITEM_ID}@{enchantment}`. When wiring up the real `albion-online-data.com` API, replace `getResourcePrice`, `getItemPrices`, and `getPriceHistory` in `data.js`.
+**This project uses [albion-online-data.com](https://www.albion-online-data.com/) as its sole data source.** The community-run API provides real-time market prices and history for all Albion Online items.
+
+Key endpoints (no auth required, CORS-enabled):
+```
+GET https://www.albion-online-data.com/api/v2/stats/prices/{item_ids}?locations={cities}&qualities={quality}
+GET https://www.albion-online-data.com/api/v2/stats/history/{item_ids}?locations={cities}&date={date}&end_date={end}&time-scale=24
+```
+- `item_ids`: comma-separated, e.g. `T4_2H_BOW,T4_2H_BOW@1`
+- `locations`: `Bridgewatch`, `Lymhurst`, `Martlock`, `FortSterling`, `Thetford`, `Caerleon`, `Brecilien`
+- `qualities`: 1–5 (Normal → Masterpiece)
+
+Item IDs follow the pattern `T{tier}_{ARCHETYPE_ID}` or `T{tier}_{ARCHETYPE_ID}@{enchantment}` (e.g. `T6_2H_BOW@2`). The authoritative list of all item archetypes and their IDs is maintained at [ao-bin-dumps](https://github.com/broderickhyman/ao-bin-dumps) (`items.json`).
+
+**Current state:** all pricing is **mocked** — the mock uses a deterministic hash (`noise()`) so prices are stable across reloads. When wiring up real data, replace `getResourcePrice`, `getItemPrices`, and `getPriceHistory` in `data.js`.
 
 ### Bilingual support
 

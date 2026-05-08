@@ -10,21 +10,22 @@ const GROUP_LABELS = {
   fr: {
     weapon_sword: 'Épées', weapon_axe: 'Haches', weapon_hammer: 'Masses & Marteaux',
     weapon_dagger: 'Dagues', weapon_spear: 'Lances', weapon_bow: 'Arcs & Arbalètes',
-    weapon_staff: 'Bâtons magiques',
+    weapon_staff: 'Bâtons magiques', weapon_quarterstaff: 'Bâtons & Lances', weapon_knuckles: 'Poings & Gantelets',
     armor_plate: 'Armures de plates', armor_leather: 'Armures en cuir', armor_cloth: 'Armures en tissu',
-    offhand: 'Mains secondaires', cape: 'Capes',
+    offhand: 'Mains secondaires', cape: 'Capes', bag: 'Sacs',
   },
   en: {
     weapon_sword: 'Swords', weapon_axe: 'Axes', weapon_hammer: 'Maces & Hammers',
     weapon_dagger: 'Daggers', weapon_spear: 'Spears', weapon_bow: 'Bows & Crossbows',
-    weapon_staff: 'Magic staves',
+    weapon_staff: 'Magic staves', weapon_quarterstaff: 'Quarterstaffs', weapon_knuckles: 'Knuckles & Gauntlets',
     armor_plate: 'Plate armor', armor_leather: 'Leather armor', armor_cloth: 'Cloth armor',
-    offhand: 'Off-hands', cape: 'Capes',
+    offhand: 'Off-hands', cape: 'Capes', bag: 'Bags',
   },
 };
 const GROUP_ORDER = [
-  'weapon_sword','weapon_axe','weapon_hammer','weapon_dagger','weapon_spear','weapon_bow','weapon_staff',
-  'armor_plate','armor_leather','armor_cloth','offhand','cape',
+  'weapon_sword','weapon_axe','weapon_hammer','weapon_dagger','weapon_spear','weapon_bow',
+  'weapon_staff','weapon_quarterstaff','weapon_knuckles',
+  'armor_plate','armor_leather','armor_cloth','offhand','cape','bag',
 ];
 
 function ItemPickerModal({ lang, current, onPick, onClose }) {

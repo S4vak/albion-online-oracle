@@ -166,7 +166,7 @@ function ItemPickerModal({ lang, current, onPick, onClose }) {
                 {groups[cat].map(it => (
                   <button
                     key={it.id}
-                    className={'pick-tile' + (current.id === it.id ? ' active' : '')}
+                    className={'pick-tile' + (current?.id === it.id ? ' active' : '')}
                     onClick={() => { onPick(it); onClose(); }}
                   >
                     <div className="pick-icon">
@@ -195,26 +195,30 @@ function ItemPicker({ lang, item, setItem, tier, setTier, ench, setEnch, quality
   return (
     <div className="item-picker">
       <button className="item-card item-card-button" onClick={() => setPickerOpen(true)} type="button">
-        <div className="item-icon">
-          <Glyph name={item.iconGlyph} size={48} />
-          <div className="tier-badge">T{tier}</div>
-        </div>
-        <div style={{ minWidth: 0, flex: 1, textAlign: 'left' }}>
+        {item ? <>
+          <div className="item-icon">
+            <Glyph name={item.iconGlyph} size={48} />
+            <div className="tier-badge">T{tier}</div>
+          </div>
+          <div style={{ minWidth: 0, flex: 1, textAlign: 'left' }}>
+            <div className="eyebrow" style={{ fontSize: 10 }}>{T(lang, 'item_picker')}</div>
+            <h3 className="item-name">{displayName(item, tier, lang)}</h3>
+            <div className="item-meta">T{tier}.{ench} · {T(lang, 'quality_label')[quality]}</div>
+            <div className="item-meta" style={{ marginTop: 6, fontStyle: 'normal' }}>
+              {expandedRecipe(item, tier, ench).map((r, i) => (
+                <span key={i} style={{ marginRight: 10 }}>
+                  <span className="num" style={{ color: 'var(--gold-deep)', fontWeight: 600 }}>{r.qty}×</span> {RESOURCES[r.res].tiers[r.tier][lang]}
+                </span>
+              ))}
+            </div>
+          </div>
+        </> : <div style={{ flex: 1, textAlign: 'left' }}>
           <div className="eyebrow" style={{ fontSize: 10 }}>{T(lang, 'item_picker')}</div>
-          <h3 className="item-name">{displayName(item, tier, lang)}</h3>
-          <div className="item-meta">
-            T{tier}.{ench} · {T(lang, 'quality_label')[quality]}
-          </div>
-          <div className="item-meta" style={{ marginTop: 6, fontStyle: 'normal' }}>
-            {expandedRecipe(item, tier, ench).map((r, i) => (
-              <span key={i} style={{ marginRight: 10 }}>
-                <span className="num" style={{ color: 'var(--gold-deep)', fontWeight: 600 }}>{r.qty}×</span> {RESOURCES[r.res].tiers[r.tier][lang]}
-              </span>
-            ))}
-          </div>
-        </div>
+          <h3 className="item-name" style={{ color: 'var(--ink-faint)' }}>{lang === 'fr' ? 'Aucun objet sélectionné' : 'No item selected'}</h3>
+          <div className="item-meta">{lang === 'fr' ? 'Cliquez pour choisir un objet à crafter' : 'Click to choose an item to craft'}</div>
+        </div>}
         <div className="item-card-cta">
-          <span className="cta-pill">{lang === 'fr' ? 'Changer' : 'Change'}</span>
+          <span className="cta-pill">{lang === 'fr' ? (item ? 'Changer' : 'Choisir') : (item ? 'Change' : 'Choose')}</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6 L 15 12 L 9 18" /></svg>
         </div>
       </button>

@@ -278,8 +278,8 @@ function CityPicker({ lang, item, cityId, setCityId }) {
   return (
     <div className="cities">
       {CITIES.map(c => {
-        const match = (c.bonuses[item.category] != null) || (c.bonuses.all != null);
-        const bonusVal = c.bonuses[item.category] != null ? c.bonuses[item.category] : (c.bonuses.all || 0);
+        const match = item ? ((c.bonuses[item.category] != null) || (c.bonuses.all != null)) : (c.bonuses.all != null);
+        const bonusVal = item ? (c.bonuses[item.category] != null ? c.bonuses[item.category] : (c.bonuses.all || 0)) : (c.bonuses.all || 0);
         return (
           <button key={c.id} className={'city' + (cityId === c.id ? ' active' : '')} onClick={() => setCityId(c.id)} title={c.desc[lang]}>
             <div className="city-row">

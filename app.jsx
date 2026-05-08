@@ -465,7 +465,8 @@ function App() {
   const [ench, setEnch] = useState(0);
   const [quality, setQuality] = useState(1);
   const [qty, setQty] = useState(50);
-  const [cityId, setCityId] = useState('lymhurst'); // bow → magic → no exact match, but Lymhurst has planks bonus
+  const [cityId, setCityId] = useState('lymhurst');
+  const [sellCityId, setSellCityId] = useState('lymhurst');
   const [useFocus, setUseFocus] = useState(false);
   const [focusBonus, setFocusBonus] = useState(0.467); // 46.7% extra return at full mastery
   const [stationTax, setStationTax] = useState(220);
@@ -512,11 +513,14 @@ function App() {
     return () => { active = false; };
   }, [item?.id, tier, ench, quality]);
 
-  const sellMarket = itemPrices[cityId] || { price: 0, ageMin: null };
+  const sellMarket = itemPrices[sellCityId] || { price: 0, ageMin: null };
   const sellPrice = sellOverride != null ? sellOverride : sellMarket.price;
 
-  // Reset sell override when item changes
-  useEffect(() => { setSellOverride(null); }, [item?.id, tier, ench, quality, cityId]);
+  // Sync sell city to craft city when craft city changes
+  useEffect(() => { setSellCityId(cityId); }, [cityId]);
+
+  // Reset sell override when item or sell city changes
+  useEffect(() => { setSellOverride(null); }, [item?.id, tier, ench, quality, sellCityId]);
   // Reset resource overrides when item or city changes
   useEffect(() => { setOverrides({}); }, [item?.id, tier, ench, cityId]);
 
@@ -649,9 +653,18 @@ function App() {
             {item && <div className="divider"><Glyph name="fleur" size={18} /></div>}
 
             {item && <div className="sell-price-card">
-              <div>
-                <FieldLabel help={T(lang, 'sell_price_help')}>{T(lang, 'sell_price')} · {city.name}</FieldLabel>
-                <div className="muted" style={{ marginTop: 4 }}>
+              <div style={{ flex: 1 }}>
+                <FieldLabel help={T(lang, 'sell_price_help')}>{T(lang, 'sell_price')}</FieldLabel>
+                <div className="filter-row" style={{ marginTop: 8, marginBottom: 6 }}>
+                  {CITIES.map(c => (
+                    <button key={c.id}
+                      className={'filter-pill filter-pill-sm' + (sellCityId === c.id ? ' active' : '')}
+                      onClick={() => setSellCityId(c.id)}>
+                      {c.name}{sellCityId === c.id && cityId !== c.id ? ' *' : ''}
+                    </button>
+                  ))}
+                </div>
+                <div className="muted" style={{ marginTop: 2 }}>
                   {lang === 'fr' ? 'Prix actuel sur le marché' : 'Current market price'}{sellMarket.ageMin != null ? ` · ${sellMarket.ageMin < 60 ? T(lang, 'ago_min', { n: sellMarket.ageMin }) : (lang === 'fr' ? `il y a ${Math.round(sellMarket.ageMin / 60)}h` : `${Math.round(sellMarket.ageMin / 60)}h ago`)}` : ''}
                   {sellOverride != null && <button className="reset-mini" style={{ marginLeft: 8 }} onClick={() => setSellOverride(null)}>↻ {T(lang, 'resource_auto')}</button>}
                 </div>
@@ -702,7 +715,7 @@ function App() {
           </div>
 
           {/* History chart */}
-          {item && <PriceHistory lang={lang} item={item} tier={tier} ench={ench} quality={quality} cityId={cityId} />}
+          {item && <PriceHistory lang={lang} item={item} tier={tier} ench={ench} quality={quality} cityId={sellCityId} />}
         </div>
 
         {/* Right rail: results */}

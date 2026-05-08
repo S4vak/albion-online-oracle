@@ -348,9 +348,12 @@
     { id:'BAG_GATHERER_FISH',     name:{ fr:'Sac du Pêcheur',        en:'Fisher Backpack' },      group:'gatherer_armor', category:'bag',     iconGlyph:'bag',    recipeKey:'bag' },
 
     // ── Tools ──
-    { id:'2H_TOOL_PICKAXE',  name:{ fr:'Pioche',          en:'Pickaxe' },          group:'tool', category:'tool', iconGlyph:'tool', recipeKey:'tool_metal' },
-    { id:'2H_TOOL_SICKLE',   name:{ fr:'Faucille',        en:'Sickle' },           group:'tool', category:'tool', iconGlyph:'tool', recipeKey:'tool_metal' },
-    { id:'2H_TOOL_FISHING',  name:{ fr:'Canne à Pêche',   en:'Fishing Rod' },      group:'tool', category:'tool', iconGlyph:'tool', recipeKey:'tool_wood' },
+    { id:'2H_TOOL_PICKAXE',  name:{ fr:'Pioche',               en:'Pickaxe' },          group:'tool', category:'tool', iconGlyph:'tool', recipeKey:'tool_metal' },
+    { id:'2H_TOOL_SICKLE',   name:{ fr:'Faucille',             en:'Sickle' },           group:'tool', category:'tool', iconGlyph:'tool', recipeKey:'tool_metal' },
+    { id:'2H_TOOL_AXE',      name:{ fr:'Hache de Bûcheron',    en:'Lumberjack\'s Axe' },group:'tool', category:'tool', iconGlyph:'tool', recipeKey:'tool_wood' },
+    { id:'2H_TOOL_HAMMER',   name:{ fr:'Marteau de Carrier',   en:'Quarrying Hammer' }, group:'tool', category:'tool', iconGlyph:'tool', recipeKey:'tool_metal' },
+    { id:'2H_TOOL_SKINNER',  name:{ fr:'Couteau de Dépeceur',  en:'Skinner\'s Knife' }, group:'tool', category:'tool', iconGlyph:'tool', recipeKey:'tool_metal' },
+    { id:'2H_TOOL_FISHING',  name:{ fr:'Canne à Pêche',        en:'Fishing Rod' },      group:'tool', category:'tool', iconGlyph:'tool', recipeKey:'tool_wood' },
   ];
 
   function getRecipe(itemOrId, tier) {

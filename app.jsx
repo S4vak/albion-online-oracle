@@ -48,6 +48,17 @@ const FAMILY_LABELS = {
 };
 const ALL_GROUPS = new Set(ITEMS.map(i => i.group));
 
+// Gathering sub-categories by profession (armour + matching tool per resource type)
+const GATHERING_SUBCATS = [
+  { key:'g_ore',   fr:'Mineur',              en:'Mining',      match:(i) => i.id.includes('_GATHERER_ORE')   || i.id === '2H_TOOL_PICKAXE' },
+  { key:'g_hide',  fr:'Chasseur de peaux',   en:'Skinning',    match:(i) => i.id.includes('_GATHERER_HIDE')  || i.id === '2H_TOOL_SKINNER' },
+  { key:'g_wood',  fr:'Bûcheron',            en:'Logging',     match:(i) => i.id.includes('_GATHERER_WOOD')  || i.id === '2H_TOOL_AXE' },
+  { key:'g_rock',  fr:'Carrier',             en:'Quarrying',   match:(i) => i.id.includes('_GATHERER_ROCK')  || i.id === '2H_TOOL_HAMMER' },
+  { key:'g_fiber', fr:'Récolteur de fibres', en:'Harvesting',  match:(i) => i.id.includes('_GATHERER_FIBER') || i.id === '2H_TOOL_SICKLE' },
+  { key:'g_fish',  fr:'Pêcheur',             en:'Fishing',     match:(i) => i.id.includes('_GATHERER_FISH')  || i.id === '2H_TOOL_FISHING' },
+];
+const GATHERING_SUBCAT_MAP = Object.fromEntries(GATHERING_SUBCATS.map(s => [s.key, s]));
+
 function ItemPickerModal({ lang, current, onPick, onClose }) {
   const [search, setSearch] = useState('');
   const [family, setFamily] = useState(null);
@@ -72,9 +83,11 @@ function ItemPickerModal({ lang, current, onPick, onClose }) {
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    const activeGroups = subcat ? [subcat] : (family ? FAMILY_GROUPS[family] : null);
+    const profDef = GATHERING_SUBCAT_MAP[subcat];
+    const activeGroups = !profDef && subcat ? [subcat] : (!profDef && family ? FAMILY_GROUPS[family] : null);
     return ITEMS.filter(i => {
-      if (activeGroups && !activeGroups.includes(i.group)) return false;
+      if (profDef) { if (!profDef.match(i)) return false; }
+      else if (activeGroups && !activeGroups.includes(i.group)) return false;
       if (!s) return true;
       return (i.name[lang] || '').toLowerCase().includes(s) ||
              (i.name.en || '').toLowerCase().includes(s) ||
@@ -125,12 +138,20 @@ function ItemPickerModal({ lang, current, onPick, onClose }) {
           </div>
           {family && (
             <div className="filter-row filter-row-sub">
-              {FAMILY_GROUPS[family].filter(g => ALL_GROUPS.has(g)).map(g => (
-                <button key={g} className={'filter-pill filter-pill-sm' + (subcat === g ? ' active' : '')}
-                  onClick={() => setSubcat(subcat === g ? null : g)}>
-                  {(GROUP_LABELS[lang] && GROUP_LABELS[lang][g]) || g}
-                </button>
-              ))}
+              {family === 'gathering'
+                ? GATHERING_SUBCATS.map(s => (
+                    <button key={s.key} className={'filter-pill filter-pill-sm' + (subcat === s.key ? ' active' : '')}
+                      onClick={() => setSubcat(subcat === s.key ? null : s.key)}>
+                      {s[lang]}
+                    </button>
+                  ))
+                : FAMILY_GROUPS[family].filter(g => ALL_GROUPS.has(g)).map(g => (
+                    <button key={g} className={'filter-pill filter-pill-sm' + (subcat === g ? ' active' : '')}
+                      onClick={() => setSubcat(subcat === g ? null : g)}>
+                      {(GROUP_LABELS[lang] && GROUP_LABELS[lang][g]) || g}
+                    </button>
+                  ))
+              }
             </div>
           )}
         </div>

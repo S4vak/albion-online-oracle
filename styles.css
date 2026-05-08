@@ -1235,6 +1235,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .gap-sm { gap: 8px; }
 .muted { color: var(--ink-faint); font-style: italic; font-size: 13px; }
 .shimmer-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-faint); }
+.chart-loading { padding: 40px; text-align: center; }
 
 /* ---------- Quality stars (small) ---------- */
 .qstar {

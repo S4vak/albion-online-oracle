@@ -2,7 +2,7 @@
 
 const { useState, useEffect, useRef, useMemo, useCallback } = React;
 const { Glyph, HelpTooltip, FieldLabel, fmtSilver, fmtSilverFull, fmtPct, Coin } = window.AlbionUI;
-const { CITIES, ITEMS, RESOURCES, TIER_NAME, getItemPrices, getResourcePrice, getPriceHistory, nutritionPerItem, expandedRecipe, ENCH_MULT, QUALITY_MULT, displayName } = window.AlbionData;
+const { CITIES, ITEMS, RESOURCES, TIER_NAME, getItemPrices, getResourcePricesBatch, getPriceHistory, nutritionPerItem, expandedRecipe, ENCH_MULT, QUALITY_MULT, displayName } = window.AlbionData;
 const { t: T, STR } = window.i18n;
 
 /* ---------- Item Picker Modal ---------- */
@@ -322,9 +322,9 @@ function ResourcesTable({ lang, item, tier, ench, cityId, prices, overrides, set
               <td style={{ textAlign: 'right' }} className="num">{fmtSilverFull(subtotal)}</td>
               <td>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span className={'freshness' + (market.ageMin > 30 ? ' old' : market.ageMin > 12 ? ' stale' : '')}>
+                  <span className={'freshness' + (market.ageMin == null ? ' stale' : market.ageMin > 120 ? ' old' : market.ageMin > 30 ? ' stale' : '')}>
                     <span className="dot"></span>
-                    <span>{T(lang, 'ago_min', { n: market.ageMin })}</span>
+                    <span>{market.ageMin == null ? '…' : market.ageMin < 60 ? T(lang, 'ago_min', { n: market.ageMin }) : lang === 'fr' ? `il y a ${Math.round(market.ageMin / 60)}h` : `${Math.round(market.ageMin / 60)}h ago`}</span>
                   </span>
                   {overridden != null && (
                     <button className="reset-mini" onClick={() => resetOverride(key)} title={T(lang, 'resource_auto')}>
@@ -344,9 +344,19 @@ function ResourcesTable({ lang, item, tier, ench, cityId, prices, overrides, set
 /* ---------- Price history chart (SVG sparkline-ish) ---------- */
 function PriceHistory({ lang, item, tier, ench, quality, cityId }) {
   const [days, setDays] = useState(30);
-  const data = useMemo(() => getPriceHistory(item.id, tier, ench, quality, cityId, days), [item.id, tier, ench, quality, cityId, days]);
+  const [data, setData] = useState([]);
+  const [histLoading, setHistLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    setHistLoading(true);
+    getPriceHistory(item.id, tier, ench, quality, cityId, days).then(d => {
+      if (active) { setData(d); setHistLoading(false); }
+    }).catch(() => { if (active) { setData([]); setHistLoading(false); } });
+    return () => { active = false; };
+  }, [item.id, tier, ench, quality, cityId, days]);
   const W = 800, H = 220, PAD_L = 56, PAD_R = 18, PAD_T = 18, PAD_B = 32;
 
+  if (histLoading) return <div className="chart-loading muted">{lang === 'fr' ? 'Chargement…' : 'Loading…'}</div>;
   if (!data.length) return null;
   const prices = data.map(d => d.price);
   const min = Math.min(...prices) * 0.96;
@@ -450,20 +460,32 @@ function App() {
   // Simpler: assume the item recipe is referenced at its declared tier; let user pick tier 2-8 of same family.
   // For prototype we keep it simple: tier of item is the recipe's primary tier. Recipe scales via expanded recipe.
 
-  // Fetch resource market prices (mocked)
-  const resourcePrices = useMemo(() => {
+  // Fetch resource market prices from real API
+  const [resourcePrices, setResourcePrices] = useState({});
+  const [resPricesLoading, setResPricesLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    setResPricesLoading(true);
     const recipe = expandedRecipe(item, tier, ench);
-    const out = {};
-    for (const r of recipe) {
-      const key = `${r.res}|${r.tier}|${r.ench}`;
-      out[key] = getResourcePrice(r.res, r.tier, cityId);
-    }
-    return out;
+    getResourcePricesBatch(recipe, cityId).then(prices => {
+      if (active) { setResourcePrices(prices); setResPricesLoading(false); }
+    }).catch(() => { if (active) setResPricesLoading(false); });
+    return () => { active = false; };
   }, [item.id, tier, ench, cityId]);
 
-  // Fetch item sell prices across cities
-  const itemPrices = useMemo(() => getItemPrices(item.id, tier, ench, quality), [item.id, tier, ench, quality]);
-  const sellMarket = itemPrices[cityId];
+  // Fetch item sell prices across cities from real API
+  const [itemPrices, setItemPrices] = useState({});
+  const [itemPricesLoading, setItemPricesLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    setItemPricesLoading(true);
+    getItemPrices(item.id, tier, ench, quality).then(prices => {
+      if (active) { setItemPrices(prices); setItemPricesLoading(false); }
+    }).catch(() => { if (active) setItemPricesLoading(false); });
+    return () => { active = false; };
+  }, [item.id, tier, ench, quality]);
+
+  const sellMarket = itemPrices[cityId] || { price: 0, ageMin: null };
   const sellPrice = sellOverride != null ? sellOverride : sellMarket.price;
 
   // Reset sell override when item changes
@@ -484,10 +506,12 @@ function App() {
   //   with focus:    returnRate = cityBonus + 0.367  (focus returns ~36.7% on top)
   const returnRate = useFocus ? Math.min(0.95, cityBonus + focusBonus) : Math.min(0.85, cityBonus + 0.152);
 
+  const pricesLoading = resPricesLoading || itemPricesLoading;
+
   const recipe = expandedRecipe(item, tier, ench);
   const resCostRaw = recipe.reduce((acc, r) => {
     const key = `${r.res}|${r.tier}|${r.ench}`;
-    const price = (overrides[key] != null) ? overrides[key] : resourcePrices[key].price;
+    const price = (overrides[key] != null) ? overrides[key] : (resourcePrices[key]?.price ?? 0);
     return acc + price * r.qty;
   }, 0);
   // Effective resource cost = raw * (1 - returnRate)
@@ -601,7 +625,7 @@ function App() {
               <div>
                 <FieldLabel help={T(lang, 'sell_price_help')}>{T(lang, 'sell_price')} · {city.name}</FieldLabel>
                 <div className="muted" style={{ marginTop: 4 }}>
-                  {lang === 'fr' ? 'Prix actuel sur le marché' : 'Current market price'} · {T(lang, 'ago_min', { n: sellMarket.ageMin })}
+                  {lang === 'fr' ? 'Prix actuel sur le marché' : 'Current market price'}{sellMarket.ageMin != null ? ` · ${sellMarket.ageMin < 60 ? T(lang, 'ago_min', { n: sellMarket.ageMin }) : (lang === 'fr' ? `il y a ${Math.round(sellMarket.ageMin / 60)}h` : `${Math.round(sellMarket.ageMin / 60)}h ago`)}` : ''}
                   {sellOverride != null && <button className="reset-mini" style={{ marginLeft: 8 }} onClick={() => setSellOverride(null)}>↻ {T(lang, 'resource_auto')}</button>}
                 </div>
               </div>

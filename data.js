@@ -1,4 +1,4 @@
-// Mock data for Albion Online craft calculator.
+// Data layer for Albion Online craft calculator.
 // Items are archetypes (tier-agnostic). Real Albion item IDs are derived as
 // `T{tier}_{archetype.id}` or `T{tier}_{archetype.id}@{ench}` — same naming
 // convention used by the albion-online-data API.
@@ -88,14 +88,6 @@
     en: { 2:"Novice's", 3:"Journeyman's", 4:"Adept's", 5:"Expert's", 6:"Master's", 7:"Grandmaster's", 8:"Elder's" },
   };
 
-  const BASE_PRICE_RES = {
-    planks:   { 2: 8,  3: 24, 4: 88,  5: 250, 6: 720, 7: 2100, 8: 6400 },
-    metalbar: { 2: 10, 3: 30, 4: 110, 5: 320, 6: 920, 7: 2700, 8: 8200 },
-    leather:  { 2: 9,  3: 26, 4: 95,  5: 280, 6: 800, 7: 2350, 8: 7100 },
-    cloth:    { 2: 9,  3: 27, 4: 100, 5: 290, 6: 830, 7: 2450, 8: 7400 },
-    herb:     { 2: 7,  3: 20, 4: 72,  5: 210, 6: 600, 7: 1750, 8: 5300 },
-    farm:     { 2: 3,  3: 10, 4: 35,  5: 100, 6: 290, 7: 860,  8: 2600 },
-  };
 
   const ENCH_MULT = { 0: 1, 1: 3.6, 2: 9.5, 3: 24, 4: 60 };
   const QUALITY_MULT = { 1: 1.0, 2: 1.2, 3: 1.5, 4: 2.0, 5: 3.0 };
@@ -104,15 +96,6 @@
     en: { 1: 'Normal', 2: 'Good', 3: 'Outstanding', 4: 'Excellent', 5: 'Masterpiece' },
   };
 
-  const CITY_MOD = {
-    bridgewatch:  { sell: 1.00, buy_res: 0.96 },
-    lymhurst:     { sell: 0.98, buy_res: 1.02 },
-    martlock:     { sell: 1.04, buy_res: 1.00 },
-    fortsterling: { sell: 0.97, buy_res: 1.04 },
-    thetford:     { sell: 1.01, buy_res: 1.05 },
-    caerleon:     { sell: 1.10, buy_res: 1.08 },
-    brecilien:    { sell: 0.95, buy_res: 0.92 },
-  };
 
   /* ---------- Recipe helpers ---------- */
   // Standard recipes used by Albion items at item-tier T:
@@ -372,67 +355,135 @@
     return `${TIER_NAME[lang][tier]} ${item.name[lang]}`;
   }
 
-  /* ---------- Pricing ---------- */
-  function hash(s) {
-    let h = 2166136261 >>> 0;
-    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
-    return h;
-  }
-  function noise(seed, range) {
-    const n = (hash(seed) % 1000) / 1000;
-    return 1 + (n - 0.5) * range;
+  /* ---------- API client ---------- */
+  const API_BASE = 'https://www.albion-online-data.com/api/v2';
+
+  const CITY_API_NAME = {
+    bridgewatch:  'Bridgewatch',
+    lymhurst:     'Lymhurst',
+    martlock:     'Martlock',
+    fortsterling: 'Fort Sterling',
+    thetford:     'Thetford',
+    caerleon:     'Caerleon',
+    brecilien:    'Brecilien',
+  };
+  const API_TO_CITY_ID = Object.fromEntries(Object.entries(CITY_API_NAME).map(([k, v]) => [v, k]));
+
+  // Map our resource keys to Albion API item IDs (refined/tradeable form)
+  function resourceApiId(resKey, tier) {
+    switch (resKey) {
+      case 'planks':   return `T${tier}_PLANKS`;
+      case 'metalbar': return `T${tier}_METALBAR`;
+      case 'leather':  return `T${tier}_LEATHER`;
+      case 'cloth':    return `T${tier}_CLOTH`;
+      case 'herb':     return `T${tier}_FIBER`;
+      default:         return null; // farm crops: no stable tier-based ID
+    }
   }
 
-  function fairItemPrice(item, tier, ench, quality) {
-    const recipe = getRecipe(item, tier);
-    let resCost = 0;
-    for (const r of recipe) resCost += BASE_PRICE_RES[r.res][r.tier] * r.qty;
-    const base = resCost * 1.18;
-    return Math.round(base * (ENCH_MULT[ench] || 1) * (QUALITY_MULT[quality] || 1));
+  /* -- Cache: 5-min TTL -- */
+  const _cache = new Map();
+  const CACHE_TTL = 5 * 60 * 1000;
+  function _cacheGet(key) {
+    const e = _cache.get(key);
+    if (!e) return null;
+    if (Date.now() - e.ts > CACHE_TTL) { _cache.delete(key); return null; }
+    return e.data;
+  }
+  function _cacheSet(key, data) { _cache.set(key, { data, ts: Date.now() }); }
+
+  async function _apiFetch(path) {
+    const cached = _cacheGet(path);
+    if (cached) return cached;
+    const resp = await fetch(API_BASE + path);
+    if (!resp.ok) throw new Error(`Albion API ${resp.status}`);
+    const data = await resp.json();
+    _cacheSet(path, data);
+    return data;
   }
 
-  function getItemPrices(itemId, tier, ench, quality) {
-    const item = ITEMS.find(i => i.id === itemId);
-    if (!item) return null;
-    const fair = fairItemPrice(item, tier, ench, quality);
+  function _ageMin(dateStr) {
+    if (!dateStr) return null;
+    const age = Math.round((Date.now() - new Date(dateStr).getTime()) / 60000);
+    return Math.max(0, age);
+  }
+
+  function _locParam(names) {
+    return names.map(n => encodeURIComponent(n)).join(',');
+  }
+
+  /* ---------- Pricing (async) ---------- */
+
+  // Returns { [cityId]: { price, ageMin } } for all cities — single API call.
+  async function getItemPrices(itemId, tier, ench, quality) {
+    const id = `T${tier}_${itemId}${ench > 0 ? `@${ench}` : ''}`;
+    const locs = _locParam(Object.values(CITY_API_NAME));
+    const path = `/stats/prices/${id}?locations=${locs}&qualities=${quality}`;
+    const rows = await _apiFetch(path);
     const out = {};
-    for (const c of CITIES) {
-      const seed = `${itemId}|${tier}|${ench}|${quality}|${c.id}`;
-      const jitter = noise(seed, 0.18);
-      const price = Math.round(fair * CITY_MOD[c.id].sell * jitter);
-      const vol = Math.max(1, Math.round(noise(seed + '|vol', 1.4) * (c.id === 'caerleon' ? 280 : c.id === 'brecilien' ? 60 : 140) / Math.pow(1.4, tier - 4)));
-      const ageMin = Math.round(noise(seed + '|age', 1.2) * (c.id === 'caerleon' ? 4 : c.id === 'brecilien' ? 25 : 12));
-      out[c.id] = { price, volume: vol, ageMin: Math.max(1, ageMin) };
+    for (const cid of Object.keys(CITY_API_NAME)) out[cid] = { price: 0, ageMin: null };
+    for (const r of rows) {
+      const cid = API_TO_CITY_ID[r.city];
+      if (cid) out[cid] = { price: r.sell_price_min || 0, ageMin: _ageMin(r.sell_price_min_date) };
     }
     return out;
   }
 
-  function getResourcePrice(res, tier, cityId) {
-    const seed = `res|${res}|${tier}|${cityId}`;
-    const jitter = noise(seed, 0.14);
-    const base = BASE_PRICE_RES[res][tier];
-    const mod = CITY_MOD[cityId].buy_res;
-    const price = Math.round(base * mod * jitter);
-    const ageMin = Math.max(1, Math.round(noise(seed + '|age', 1.4) * 8));
-    const volume = Math.max(20, Math.round(noise(seed + '|vol', 1.4) * 1200 / Math.pow(1.5, tier - 4)));
-    return { price, ageMin, volume };
+  // Batch-fetch prices for all recipe resources — single API call per city.
+  // Returns { [key]: { price, ageMin } } where key = `${res}|${tier}|${ench}`.
+  async function getResourcePricesBatch(recipeEntries, cityId) {
+    const location = CITY_API_NAME[cityId];
+    if (!location) return {};
+    const out = {};
+    for (const r of recipeEntries) out[`${r.res}|${r.tier}|${r.ench}`] = { price: 0, ageMin: null };
+
+    const idMap = {}; // apiId → key
+    for (const r of recipeEntries) {
+      const apiId = resourceApiId(r.res, r.tier);
+      if (apiId) idMap[apiId] = `${r.res}|${r.tier}|${r.ench}`;
+    }
+    const ids = Object.keys(idMap);
+    if (!ids.length) return out;
+
+    const path = `/stats/prices/${ids.join(',')}?locations=${encodeURIComponent(location)}&qualities=1`;
+    const rows = await _apiFetch(path);
+    for (const r of rows) {
+      if (r.city !== location) continue;
+      const key = idMap[r.item_id];
+      if (key) out[key] = { price: r.sell_price_min || 0, ageMin: _ageMin(r.sell_price_min_date) };
+    }
+    return out;
   }
 
-  function getPriceHistory(itemId, tier, ench, quality, cityId, days = 30) {
-    const item = ITEMS.find(i => i.id === itemId);
-    if (!item) return [];
-    const fair = fairItemPrice(item, tier, ench, quality) * CITY_MOD[cityId].sell;
-    const points = [];
-    let trend = 0;
-    for (let i = days - 1; i >= 0; i--) {
-      const seed = `hist|${itemId}|${tier}|${ench}|${quality}|${cityId}|${i}`;
-      const day = (hash(seed) % 1000) / 1000;
-      trend += (day - 0.5) * 0.04;
-      trend = Math.max(-0.25, Math.min(0.25, trend));
-      const v = fair * (1 + trend) * (1 + (day - 0.5) * 0.06);
-      points.push({ day: i, price: Math.round(v), volume: Math.max(1, Math.round(day * 200)) });
-    }
-    return points;
+  // Single resource price lookup (kept for compatibility).
+  async function getResourcePrice(res, tier, cityId) {
+    const location = CITY_API_NAME[cityId];
+    const id = resourceApiId(res, tier);
+    if (!id || !location) return { price: 0, ageMin: null };
+    const path = `/stats/prices/${id}?locations=${encodeURIComponent(location)}&qualities=1`;
+    const rows = await _apiFetch(path);
+    const r = rows.find(x => x.city === location);
+    return r ? { price: r.sell_price_min || 0, ageMin: _ageMin(r.sell_price_min_date) } : { price: 0, ageMin: null };
+  }
+
+  // Returns [{ day, price, volume }] sorted oldest → newest.
+  async function getPriceHistory(itemId, tier, ench, quality, cityId, days = 30) {
+    const id = `T${tier}_${itemId}${ench > 0 ? `@${ench}` : ''}`;
+    const location = CITY_API_NAME[cityId];
+    if (!location) return [];
+    const now = Date.now();
+    const endDate   = new Date(now).toISOString().slice(0, 10);
+    const startDate = new Date(now - days * 86400000).toISOString().slice(0, 10);
+    const path = `/stats/history/${id}?locations=${encodeURIComponent(location)}&date=${startDate}&end_date=${endDate}&time-scale=24&qualities=${quality}`;
+    const rows = await _apiFetch(path);
+    const cityRow = rows.find(r => r.location === location);
+    if (!cityRow || !cityRow.data || !cityRow.data.length) return [];
+    const sorted = [...cityRow.data].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    return sorted.map(d => ({
+      day: Math.round((now - new Date(d.timestamp).getTime()) / 86400000),
+      price: d.avg_price || 0,
+      volume: d.item_count || 0,
+    }));
   }
 
   function nutritionPerItem(tier, ench) {
@@ -440,7 +491,6 @@
     return base * (1 + ench * 2);
   }
 
-  // Backward-compat: returns recipe entries as before but tier-aware.
   function expandedRecipe(item, tier, ench) {
     return getRecipe(item, tier).map(r => ({ ...r, ench }));
   }
@@ -448,8 +498,8 @@
   window.AlbionData = {
     CITIES, ITEMS, RESOURCES, TIER_NAME,
     ENCH_MULT, QUALITY_MULT, QUALITY_LABEL,
-    getItemPrices, getResourcePrice, getPriceHistory,
-    fairItemPrice, nutritionPerItem, expandedRecipe,
+    getItemPrices, getResourcePrice, getResourcePricesBatch, getPriceHistory,
+    nutritionPerItem, expandedRecipe,
     albionId, displayName, getRecipe,
   };
 })();

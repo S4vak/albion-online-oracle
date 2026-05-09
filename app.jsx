@@ -2,49 +2,87 @@
 
 const { useState, useEffect, useRef, useMemo, useCallback } = React;
 const { Glyph, HelpTooltip, FieldLabel, fmtSilver, fmtSilverFull, fmtPct, Coin } = window.AlbionUI;
-const { CITIES, ITEMS, RESOURCES, TIER_NAME, getItemPrices, getResourcePricesBatch, getPriceHistory, nutritionPerItem, expandedRecipe, ENCH_MULT, QUALITY_MULT, displayName } = window.AlbionData;
+const { CITIES, ITEMS, RESOURCES, TIER_NAME, getItemPrices, getResourcePricesBatch, getPriceHistory, nutritionPerItem, expandedRecipe, ENCH_MULT, QUALITY_MULT, displayName, albionId } = window.AlbionData;
 const { t: T, STR } = window.i18n;
 
 /* ---------- Item Picker Modal ---------- */
 const GROUP_LABELS = {
   fr: {
+    // Guerrier
     weapon_sword: 'Épées', weapon_axe: 'Haches', weapon_hammer: 'Masses & Marteaux',
-    weapon_dagger: 'Dagues', weapon_spear: 'Lances', weapon_bow: 'Arcs & Arbalètes',
-    weapon_staff: 'Bâtons magiques', weapon_quarterstaff: 'Bâtons & Lances', weapon_knuckles: 'Poings & Gantelets',
-    armor_plate: 'Armures de plates', armor_leather: 'Armures en cuir', armor_cloth: 'Armures en tissu',
+    armor_plate: 'Armures de plates',
+    // Chasseur
+    weapon_bow: 'Arcs & Arbalètes', weapon_spear: 'Lances', weapon_quarterstaff: 'Bâtons de combat',
+    armor_leather: 'Armures en cuir',
+    // Assassin
+    weapon_dagger: 'Dagues', weapon_knuckles: 'Poings & Gantelets',
+    // Mage
+    weapon_staff_fire: 'Bâtons de feu', weapon_staff_frost: 'Bâtons de givre',
+    weapon_staff_arcane: 'Bâtons arcaniques', weapon_staff_holy: 'Bâtons sacrés',
+    weapon_staff_nature: 'Bâtons de nature', weapon_staff_curse: 'Bâtons maudits',
+    weapon_shapeshifter: 'Bâtons métamorphes',
+    armor_cloth: 'Armures en tissu',
+    // Commun
     offhand: 'Mains secondaires', cape: 'Capes', bag: 'Sacs',
+    // Artisan
     gatherer_armor: 'Équipement de récolte', tool: 'Outils',
+    // Consommables
     potion: 'Potions', food: 'Nourriture',
   },
   en: {
+    // Warrior
     weapon_sword: 'Swords', weapon_axe: 'Axes', weapon_hammer: 'Maces & Hammers',
-    weapon_dagger: 'Daggers', weapon_spear: 'Spears', weapon_bow: 'Bows & Crossbows',
-    weapon_staff: 'Magic staves', weapon_quarterstaff: 'Quarterstaffs', weapon_knuckles: 'Knuckles & Gauntlets',
-    armor_plate: 'Plate armor', armor_leather: 'Leather armor', armor_cloth: 'Cloth armor',
+    armor_plate: 'Plate armor',
+    // Hunter
+    weapon_bow: 'Bows & Crossbows', weapon_spear: 'Spears', weapon_quarterstaff: 'Quarterstaffs',
+    armor_leather: 'Leather armor',
+    // Assassin
+    weapon_dagger: 'Daggers', weapon_knuckles: 'Knuckles & Gauntlets',
+    // Mage
+    weapon_staff_fire: 'Fire Staves', weapon_staff_frost: 'Frost Staves',
+    weapon_staff_arcane: 'Arcane Staves', weapon_staff_holy: 'Holy Staves',
+    weapon_staff_nature: 'Nature Staves', weapon_staff_curse: 'Curse Staves',
+    weapon_shapeshifter: 'Shapeshifter Staves',
+    armor_cloth: 'Cloth armor',
+    // Common
     offhand: 'Off-hands', cape: 'Capes', bag: 'Bags',
+    // Artisan
     gatherer_armor: 'Gatherer gear', tool: 'Tools',
+    // Consumables
     potion: 'Potions', food: 'Food',
   },
 };
 const GROUP_ORDER = [
-  'weapon_sword','weapon_axe','weapon_hammer','weapon_dagger','weapon_spear','weapon_bow',
-  'weapon_staff','weapon_quarterstaff','weapon_knuckles',
-  'armor_plate','armor_leather','armor_cloth',
+  // Guerrier
+  'weapon_sword','weapon_axe','weapon_hammer','armor_plate',
+  // Chasseur
+  'weapon_bow','weapon_spear','weapon_quarterstaff','armor_leather',
+  // Assassin
+  'weapon_dagger','weapon_knuckles',
+  // Mage
+  'weapon_staff_fire','weapon_staff_frost','weapon_staff_arcane',
+  'weapon_staff_holy','weapon_staff_nature','weapon_staff_curse',
+  'weapon_shapeshifter','armor_cloth',
+  // Commun
   'offhand','cape','bag',
+  // Artisan
   'gatherer_armor','tool',
+  // Consommables
   'potion','food',
 ];
 
 const FAMILY_GROUPS = {
-  weapon:     ['weapon_sword','weapon_axe','weapon_hammer','weapon_dagger','weapon_spear','weapon_bow','weapon_staff','weapon_quarterstaff','weapon_knuckles'],
-  armor:      ['armor_plate','armor_leather','armor_cloth'],
+  guerrier:   ['weapon_sword','weapon_axe','weapon_hammer','armor_plate'],
+  chasseur:   ['weapon_bow','weapon_spear','weapon_quarterstaff','armor_leather'],
+  assassin:   ['weapon_dagger','weapon_knuckles'],
+  mage:       ['weapon_staff_fire','weapon_staff_frost','weapon_staff_arcane','weapon_staff_holy','weapon_staff_nature','weapon_staff_curse','weapon_shapeshifter','armor_cloth'],
   accessory:  ['offhand','cape','bag'],
-  consumable: ['potion','food'],
   gathering:  ['gatherer_armor','tool'],
+  consumable: ['potion','food'],
 };
 const FAMILY_LABELS = {
-  fr: { weapon:'Armes', armor:'Armures', accessory:'Accessoires', consumable:'Consommables', gathering:'Récolte & Outils' },
-  en: { weapon:'Weapons', armor:'Armor', accessory:'Accessories', consumable:'Consumables', gathering:'Gathering & Tools' },
+  fr: { guerrier:'Guerrier', chasseur:'Chasseur', assassin:'Assassin', mage:'Mage', accessory:'Accessoires', consumable:'Consommables', gathering:'Récolte & Outils' },
+  en: { guerrier:'Warrior', chasseur:'Hunter', assassin:'Assassin', mage:'Mage', accessory:'Accessories', consumable:'Consumables', gathering:'Gathering & Tools' },
 };
 const ALL_GROUPS = new Set(ITEMS.map(i => i.group));
 
@@ -170,7 +208,14 @@ function ItemPickerModal({ lang, current, onPick, onClose }) {
                     onClick={() => { onPick(it); onClose(); }}
                   >
                     <div className="pick-icon">
-                      <Glyph name={it.iconGlyph} size={36} stroke={1.4} />
+                      <img
+                        src={`https://render.albiononline.com/v1/item/T${it.iconTier || (it.tierNames ? Math.min(...Object.keys(it.tierNames.fr || it.tierNames.en).map(Number)) : 4)}_${it.iconId || it.id}.png`}
+                        width={52} height={52}
+                        style={{ objectFit: 'contain' }}
+                        onError={e => { e.currentTarget.style.display='none'; e.currentTarget.nextElementSibling.style.display='block'; }}
+                        alt=""
+                      />
+                      <span style={{ display:'none' }}><Glyph name={it.iconGlyph} size={36} stroke={1.4} /></span>
                     </div>
                     <div className="pick-name">{it.name[lang]}</div>
                     <div className="pick-sub">T2 – T8</div>
@@ -191,13 +236,33 @@ function ItemPickerModal({ lang, current, onPick, onClose }) {
 /* ---------- Item Picker (inline) ---------- */
 function ItemPicker({ lang, item, setItem, tier, setTier, ench, setEnch, quality, setQuality, qty, setQty }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [iconErr, setIconErr] = useState(false);
+  useEffect(() => setIconErr(false), [item?.id, tier, ench]);
+
+  const validTiers = item?.tierNames
+    ? Object.keys(item.tierNames.fr || item.tierNames.en).map(Number).sort((a, b) => a - b)
+    : [2, 3, 4, 5, 6, 7, 8];
+  useEffect(() => {
+    if (!item?.tierNames) return;
+    const keys = Object.keys(item.tierNames.fr || item.tierNames.en).map(Number);
+    if (!keys.includes(tier)) setTier(keys.sort((a, b) => a - b)[0]);
+  }, [item?.id]);
 
   return (
     <div className="item-picker">
-      <button className="item-card item-card-button" onClick={() => setPickerOpen(true)} type="button">
+      <div className="item-card">
         {item ? <>
           <div className="item-icon">
-            <Glyph name={item.iconGlyph} size={48} />
+            {iconErr
+              ? <Glyph name={item.iconGlyph} size={48} />
+              : <img
+                  src={`https://render.albiononline.com/v1/item/T${tier}_${item.iconId || item.id}${ench > 0 ? `@${ench}` : ''}.png?quality=${quality}`}
+                  width={72} height={72}
+                  style={{ objectFit: 'contain' }}
+                  onError={() => setIconErr(true)}
+                  alt=""
+                />
+            }
             <div className="tier-badge">T{tier}</div>
           </div>
           <div style={{ minWidth: 0, flex: 1, textAlign: 'left' }}>
@@ -215,20 +280,19 @@ function ItemPicker({ lang, item, setItem, tier, setTier, ench, setEnch, quality
         </> : <div style={{ flex: 1, textAlign: 'left' }}>
           <div className="eyebrow" style={{ fontSize: 10 }}>{T(lang, 'item_picker')}</div>
           <h3 className="item-name" style={{ color: 'var(--ink-faint)' }}>{lang === 'fr' ? 'Aucun objet sélectionné' : 'No item selected'}</h3>
-          <div className="item-meta">{lang === 'fr' ? 'Cliquez pour choisir un objet à crafter' : 'Click to choose an item to craft'}</div>
         </div>}
-        <div className="item-card-cta">
+        <button className="item-card-cta" onClick={() => setPickerOpen(true)} type="button">
           <span className="cta-pill">{lang === 'fr' ? (item ? 'Changer' : 'Choisir') : (item ? 'Change' : 'Choose')}</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6 L 15 12 L 9 18" /></svg>
-        </div>
-      </button>
+        </button>
+      </div>
 
       <div className="col gap-md">
         <div className="row gap-md" style={{ alignItems: 'flex-start' }}>
           <div className="field" style={{ flex: 1 }}>
             <FieldLabel>{T(lang, 'tier')}</FieldLabel>
             <div className="seg">
-              {[2, 3, 4, 5, 6, 7, 8].map(n => (
+              {validTiers.map(n => (
                 <button key={n} className={'seg-item' + (tier === n ? ' active' : '')} onClick={() => setTier(n)}>T{n}</button>
               ))}
             </div>
@@ -461,7 +525,7 @@ function App() {
 
   // Form state
   const [item, setItem] = useState(null);
-  const [tier, setTier] = useState(6);
+  const [tier, setTier] = useState(2);
   const [ench, setEnch] = useState(0);
   const [quality, setQuality] = useState(1);
   const [qty, setQty] = useState(50);
